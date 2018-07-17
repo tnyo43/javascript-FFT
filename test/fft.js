@@ -379,3 +379,87 @@ describe("IFFT", function() {
     });
   });
 });
+
+describe("ローパス", function() {
+  describe("指定した以上の周波数成分は0になる", function() {
+    describe("1つの波形しかないときは消える", function() {
+      it("cos波", function() {
+        let n = 32;
+        let fft = init_FFT(n, 1, [10], 0, []);
+
+        fft.fft();
+        fft.low_pass(9);
+
+        let N = n*100;
+        for (var i = 0; i < N; i++) {
+          assert.ok(almost_zero(fft.ifft(i/N))); 
+        }
+      });
+      it("sin波", function() {
+        let n = 32;
+        let fft = init_FFT(n, 0, [], 1, [10]);
+
+        fft.fft();
+        fft.low_pass(9);
+
+        let N = n*100;
+        for (var i = 0; i < N; i++) {
+          assert.ok(almost_zero(fft.ifft(i/N)));
+        }
+      });
+    });
+    describe("合成波のときは周波数の小さい成分だけ残る", function() {
+      it("cos波で1つは小さく、1つは大きい周波数", function() {
+        let n = 32;
+        let fft = init_FFT(n, 2, [4, 5], 0, []);
+
+        fft.fft();
+        fft.low_pass(5);
+
+        let N = n*100;
+        for(var i = 0; i < N; i++) {
+          assert.ok(almost(fft.ifft(i/N), Math.cos(2*PI*4*i/N)));
+        }
+      });
+      it("sin波で1つは小さく、1つは大きい周波数", function() {
+        let n = 32;
+        let fft = init_FFT(n, 0, [], 2, [4, 5]);
+
+        fft.fft();
+        fft.low_pass(5);
+
+        let N = n*10;
+        for(var i = 0; i < N; i++) {
+          assert.ok(almost(fft.ifft(i/N), Math.sin(2*PI*4*i/N)));
+        }
+      });
+      it("sin波cos波の合成波で、高周波成分のみカット", function() {
+        let n = 32;
+        let s = [], c = [];
+        for (var i = 1; i < n/2; i++) {
+          s.push(i);
+          c.push(i);
+        }
+        let fft = init_FFT(n, c.length, c, s.length, s);
+
+        fft.fft();
+        fft.low_pass(6);
+
+        let N = n*100;
+        let f = (angle) => {
+          let x = 0;
+          for (var k = 1; k < 6; k++) {
+            x += Math.sin(angle*k);
+            x += Math.cos(angle*k);
+          }
+          return x;
+        }
+        for (var i = 0; i < N; i++) {
+          assert.ok(almost(fft.ifft(i/N), f(2*PI/N*i)))
+        }
+      });
+    });
+  });
+});
+
+

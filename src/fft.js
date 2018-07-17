@@ -45,6 +45,7 @@ class FFT {
     }
     this.spectrum = null;
     this.result = null;
+    this.pass = this.N;
   }
 
   is_valid() {
@@ -81,31 +82,17 @@ class FFT {
     if (this.spectrum == null) return null;
     let N = this.N;
     let result = this.spectrum[0][0];
-    for (var k = 1; k < N/2; k++) {
+    for (var k = 1; k < Math.min(N/2, this.pass); k++) {
       result += 2*this.spectrum[k][0]*Math.cos(2*PI*k*t);
-      result -= this.spectrum[k][1]*Math.sin(2*PI*k*t);
-      result += this.spectrum[N-k][1]*Math.sin(2*PI*k*t);
+      result += (this.spectrum[N-k][1]-this.spectrum[k][1])*Math.sin(2*PI*k*t);
     }
     return result;
   }
-  /*
-  ifft() {
-    if (this.spectrum == null) return false;
-    let N = this.N;
-    this.result = []
-    for (var i = 0; i < N; i++) {
-      let x = 0.0;
-      for (var j = 0; j < N; j++) {
-        for (var k = 0; k < 2; k++){
-          x -= this.matrix[i][j][k]*this.spectrum[j][k]; 
-        }
-      }
-      this.result.push(x);
-    }
 
-    return true;
+  low_pass(n) {
+    if (n < 0) this.pass = this.N;
+    else this.pass = n;
   }
-  */
 
   set N (n) {
     this._N = n;
