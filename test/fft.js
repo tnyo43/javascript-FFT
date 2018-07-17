@@ -218,15 +218,164 @@ describe("IFFT", function() {
     let fft = init_FFT(n, 0, [], 0, []);
 
     // FFT前なので実行不可
-    assert.ok(!fft.ifft());
+    assert.ok(fft.ifft(0) == null);
     assert.ok(fft.fft());
 
     // FFT後で実行可
-    assert.ok(fft.ifft());
+    assert.ok(fft.ifft(0) != null);
   });
   describe("IFFTをすると元に戻る", function() {
-    it("sin波を入力するとsin波になる", function() {
-    
+    describe("sin波を入力するとsin波になる", function() {
+      it("周波数の小さい波形なら逆変換で元に戻る", function() {
+        let n = 32;
+        let s = [];
+        for (var i = 1; i < n/2; i++) s.push(i);
+        let fft = init_FFT(n, 0, [], s.length, s);
+
+        // フーリエ変換
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < s.length; k++) {
+            r += Math.sin(s[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(result);
+      });
+      it("周波数がT/2より大きい波形を含むと元に戻らない", function() {
+        let n = 32;
+        let s = [n/2];
+        let fft = init_FFT(n, 0, [], s.length, s);
+
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < s.length; k++) {
+            r += Math.sin(s[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(!result);
+      });
+    });
+    describe("cos波を入力するとcos波になる", function() {
+      it("周波数の小さい波形なら逆変換で元に戻る", function() {
+        let n = 32;
+        let c = [];
+        for (var i = 1; i < n/2; i++) c.push(i);
+        let fft = init_FFT(n, c.length, c, 0, []);
+
+        // フーリエ変換
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < c.length; k++) {
+            r += Math.cos(c[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(result);
+      });
+      it("周波数がT/2より大きい波形を含むと元に戻らない", function() {
+        let n = 32;
+        let c = [n/2];
+        let fft = init_FFT(n, c.length, c, 0, []);
+
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < c.length; k++) {
+            r += Math.cos(c[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(!result);
+      });
+    });
+    describe("合成波を入力すると合成波になる", function() {
+      it("周波数の小さい波形なら逆変換で元に戻る", function() {
+        let n = 32;
+        let c = [], s = [];
+        for (var i = 1; i < n/2; i++) {
+          c.push(i);
+          s.push(i);
+        }
+        let fft = init_FFT(n, c.length, c, s.length, s);
+
+        // フーリエ変換
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < c.length; k++) {
+            r += Math.cos(c[k]*angle)
+          }
+          for (var k = 0; k < s.length; k++) {
+            r += Math.sin(s[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(result);
+      });
+      it("周波数がT/2より大きい波形を含むと元に戻らない", function() {
+        let n = 32;
+        let c = [], s = [];
+        for (var i = 1; i < n/2; i++) {
+          c.push(i);
+          s.push(i);
+        }
+        s.push(n/2);
+        let fft = init_FFT(n, c.length, c, s.length, s);
+
+        fft.fft();
+
+        let result = true;
+        let N = n*10;
+        let f = (angle) => {
+          let r = 0;
+          for (var k = 0; k < c.length; k++) {
+            r += Math.cos(c[k]*angle)
+          }
+          for (var k = 0; k < s.length; k++) {
+            r += Math.sin(s[k]*angle)
+          }
+          return r;
+        }
+        for (var i = 0; i < N; i++) {
+          result = result && almost(f(2*PI/N*i),fft.ifft(i/N));
+        }
+        assert.ok(!result);
+      });
     });
   });
 });

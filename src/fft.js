@@ -77,12 +77,35 @@ class FFT {
     return true;
   }
 
+  ifft(t) {
+    if (this.spectrum == null) return null;
+    let N = this.N;
+    let result = this.spectrum[0][0];
+    for (var k = 1; k < N/2; k++) {
+      result += 2*this.spectrum[k][0]*Math.cos(2*PI*k*t);
+      result -= this.spectrum[k][1]*Math.sin(2*PI*k*t);
+      result += this.spectrum[N-k][1]*Math.sin(2*PI*k*t);
+    }
+    return result;
+  }
+  /*
   ifft() {
     if (this.spectrum == null) return false;
-    // ifft
+    let N = this.N;
+    this.result = []
+    for (var i = 0; i < N; i++) {
+      let x = 0.0;
+      for (var j = 0; j < N; j++) {
+        for (var k = 0; k < 2; k++){
+          x -= this.matrix[i][j][k]*this.spectrum[j][k]; 
+        }
+      }
+      this.result.push(x);
+    }
 
     return true;
   }
+  */
 
   set N (n) {
     this._N = n;
