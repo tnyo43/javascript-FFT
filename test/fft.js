@@ -12,6 +12,8 @@ let almost = (x, actual) => {
   return Math.abs(x-actual) < EPS;
 }
 
+
+
 var assert = require('assert');
 describe("初期化", function() {
   describe("指定した長さの配列を生成", function() {
@@ -158,6 +160,87 @@ describe("サンプリング", function() {
           assert.ok(almost_zero(fft.spectrum[i][1]));
         }
       });
+      describe("サンプルが2次の合成波なら2箇所が0でない", function() {
+        it("sin波2つなら虚部に2箇所", function() {
+          let n = 32;
+          let k = 2, l = 5;
+          let fft = new FFT(n);
+          let f = (angle) => {
+            return Math.sin(angle*k) + 2*Math.sin(angle*l);
+          }
+          for (var i = 0; i < n; i++) {
+            fft.put(i, f(2*PI*i/n));
+          }
+          assert.ok(fft.fft());
+          for (var i = 0; i < n; i++) {
+            assert.ok(almost_zero(fft.spectrum[i][0]));
+            if ((i-k)*(i-l)*(i-n+k)*(i-n+l) == 0) {
+              assert.ok(!almost_zero(fft.spectrum[i][1]));
+            }
+          }
+        });
+        it("cos波2つなら虚部に2箇所", function() {
+          let n = 32;
+          let k = 2, l = 5;
+          let fft = new FFT(n);
+          let f = (angle) => {
+            return Math.cos(angle*k) + 2*Math.cos(angle*l);
+          }
+          for (var i = 0; i < n; i++) {
+            fft.put(i, f(2*PI*i/n));
+          }
+          assert.ok(fft.fft());
+          for (var i = 0; i < n; i++) {
+            assert.ok(almost_zero(fft.spectrum[i][1]));
+            if ((i-k)*(i-l)*(i-n+k)*(i-n+l) == 0) {
+              assert.ok(!almost_zero(fft.spectrum[i][0]));
+            }
+          }
+        });
+        it("sin波とcos波なら実部と虚部に1箇所ずつ", function() {
+          let n = 32;
+          let k = 2, l = 5;
+          let fft = new FFT(n);
+          let f = (angle) => {
+            return Math.cos(angle*k) + 2*Math.sin(angle*l);
+          }
+          for (var i = 0; i < n; i++) {
+            fft.put(i, f(2*PI/n*i));
+          }
+          assert.ok(fft.fft());
+          for (var i = 0; i < n; i++) {
+            for (var j = 0; j < 2; j++) {
+              if ((i-k)*(i-n+k)*(j-1) + (i-l)*(i-n+l)*j == 0) {
+                assert.ok(!almost_zero(fft.spectrum[i][j]));
+              } else {
+                assert.ok(almost_zero(fft.spectrum[i][j]));
+              }
+            }
+          }
+        });
+      });
+    });
+  });
+});
+
+describe("IFFT", function() {
+  it("FFTをしたらIFFT可能", function() {
+    let n = 32;
+    let k = 2;
+    let fft = new FFT(n);
+    let f = (angle) => { return Math.sin(k*angle); }
+    for (var i = 0; i < n; i++) fft.put(i, f(2*PI/n*i));
+
+    // FFT前なので実行不可
+    assert.ok(!fft.ifft());
+    assert.ok(fft.fft());
+
+    // FFT後で実行可
+    assert.ok(fft.ifft());
+  });
+  describe("IFFTをすると元に戻る", function() {
+    it("sin波を入力するとsin波になる", function() {
+    
     });
   });
 });
