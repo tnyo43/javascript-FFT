@@ -44,6 +44,7 @@ class FFT {
       }
     }
     this.spectrum = null;
+    this.result = null;
   }
 
   is_valid() {

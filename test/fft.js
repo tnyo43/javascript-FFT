@@ -12,7 +12,20 @@ let almost = (x, actual) => {
   return Math.abs(x-actual) < EPS;
 }
 
-
+let init_FFT = (N, k, cos, l, sin) => {
+  let fft = new FFT(N);
+  let f = (angle) => {
+    let res = 0
+    for (var i = 0; i < k; i++) 
+      res += Math.cos(angle*cos[i]);
+    for (var i = 0; i < l; i++)
+      res += Math.sin(angle*sin[i]);
+    return res;
+  }
+  for (var i = 0; i < N; i++)
+    fft.put(i, f(2*PI/N*i));
+  return fft;
+}
 
 var assert = require('assert');
 describe("初期化", function() {
@@ -140,10 +153,7 @@ describe("サンプリング", function() {
       });
       it("サンプリングがsin関数なら虚部だけ", function() {
         let n = 32;
-        let fft = new FFT(32);
-        for (var i = 0; i < n; i++) {
-          fft.put(i, Math.sin(2*PI*i/n));
-        }
+        let fft = init_FFT(n, 0, [], 1, [1]);
         assert.ok(fft.fft());
         for (var i = 0; i < n; i++) {
           assert.ok(almost_zero(fft.spectrum[i][0]));
@@ -151,10 +161,7 @@ describe("サンプリング", function() {
       });
       it("サンプリングがcos関数なら実部だけ", function() {
         let n = 32;
-        let fft = new FFT(32);
-        for (var i = 0; i < n; i++) {
-          fft.put(i, Math.cos(2*PI*i/n));
-        }
+        let fft = init_FFT(n, 1, [1], 0, []);
         assert.ok(fft.fft());
         for (var i = 0; i < n; i++) {
           assert.ok(almost_zero(fft.spectrum[i][1]));
@@ -163,14 +170,8 @@ describe("サンプリング", function() {
       describe("サンプルが2次の合成波なら2箇所が0でない", function() {
         it("sin波2つなら虚部に2箇所", function() {
           let n = 32;
-          let k = 2, l = 5;
-          let fft = new FFT(n);
-          let f = (angle) => {
-            return Math.sin(angle*k) + 2*Math.sin(angle*l);
-          }
-          for (var i = 0; i < n; i++) {
-            fft.put(i, f(2*PI*i/n));
-          }
+          let k = 2, l = 5
+          let fft = init_FFT(n, 0, [], 2, [k, l]);
           assert.ok(fft.fft());
           for (var i = 0; i < n; i++) {
             assert.ok(almost_zero(fft.spectrum[i][0]));
@@ -182,13 +183,7 @@ describe("サンプリング", function() {
         it("cos波2つなら虚部に2箇所", function() {
           let n = 32;
           let k = 2, l = 5;
-          let fft = new FFT(n);
-          let f = (angle) => {
-            return Math.cos(angle*k) + 2*Math.cos(angle*l);
-          }
-          for (var i = 0; i < n; i++) {
-            fft.put(i, f(2*PI*i/n));
-          }
+          let fft = init_FFT(n, 2, [k, l], 0, []);
           assert.ok(fft.fft());
           for (var i = 0; i < n; i++) {
             assert.ok(almost_zero(fft.spectrum[i][1]));
@@ -200,13 +195,7 @@ describe("サンプリング", function() {
         it("sin波とcos波なら実部と虚部に1箇所ずつ", function() {
           let n = 32;
           let k = 2, l = 5;
-          let fft = new FFT(n);
-          let f = (angle) => {
-            return Math.cos(angle*k) + 2*Math.sin(angle*l);
-          }
-          for (var i = 0; i < n; i++) {
-            fft.put(i, f(2*PI/n*i));
-          }
+          let fft = init_FFT(n, 1, [k], 1, [l]);
           assert.ok(fft.fft());
           for (var i = 0; i < n; i++) {
             for (var j = 0; j < 2; j++) {
@@ -226,10 +215,7 @@ describe("サンプリング", function() {
 describe("IFFT", function() {
   it("FFTをしたらIFFT可能", function() {
     let n = 32;
-    let k = 2;
-    let fft = new FFT(n);
-    let f = (angle) => { return Math.sin(k*angle); }
-    for (var i = 0; i < n; i++) fft.put(i, f(2*PI/n*i));
+    let fft = init_FFT(n, 0, [], 0, []);
 
     // FFT前なので実行不可
     assert.ok(!fft.ifft());
